@@ -1,0 +1,29 @@
+## 作者：Herry同学 <Badge type="tip" text="^beta" />
+
+毕业于中国哔哩哔哩大学、抖音职业技术高校双一流学士学位，师从ChatGPT，cv工程师<br>
+
+笔记源码出自b站 **<span style="border-bottom:2px dashed #00ABE3;">up程序员老罗</span>**<br>
+
+
+罗老师的源码均有专利，可随意用于毕设/简历的项目,但是不允许商用及转卖，知识无价，支持原创作者<br>
+
+
+罗老师的微信：**coder_laoluo**(想加入微信群请加罗老师，让罗老师拉你)
+
+支持原创源码，购买商城:[easyshop](http://easyshop.wuhancoder.com/),接单团队支持各种基于罗老师的源码二次开发，欢迎咨询
+
+此笔记会**持续更新**， ，笔记内容均为个人总结，可以在群聊里提出建议，高强度水群。
+
+我的Gitee笔记地址，给我一个小小的Start吧！：[Herry (gitee.com)](https://gitee.com/x121318/easy-pan)
+
+
+欢迎你加入罗老师的群聊和罗老师一起探讨技术上的问题，一个人只能闭门造车，一起探讨难点才能走得更远(记得视频多刷刷弹幕)
+
+✨无私奉献，用爱发电，欢迎赞助
+
+> [!TIP]
+> 祝你学习愉快，未来可期~
+
+[vitepress官方文档](https://vitepress.dev/zh/guide/markdown#table-of-contents) ☀️
+[markdown文档 ](https://yiov.top/daily/markdown/#%E8%B6%85%E9%93%BE%E6%8E%A5)☀️
+[ vitepress主题](https://vitepress.yiov.top/style.html#%E7%BB%84%E6%88%90)

@@ -1,0 +1,1 @@
+import{_ as a,c as s,o as n,a5 as e}from"./chunks/framework.C3zm5dwq.js";const _=JSON.parse('{"title":"通用型方法","description":"","frontmatter":{},"headers":[],"relativePath":"utils.md","filePath":"utils.md"}'),p={name:"utils.md"},t=e("",9),l=[t];function i(o,c,r,d,h,u){return n(),s("div",null,l)}const f=a(p,[["render",i]]);export{_ as __pageData,f as default};
