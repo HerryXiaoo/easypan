@@ -669,7 +669,29 @@ const logout = async () => {
 
 ## 文件列表
 
-doing....
+**到-P11文件列表啦**
+封装了table组件，可以去通用组件-table去看
+> Views/main/mian.vue
+```
+   <Table
+        ref="dataTableRef"   //获取表格实例
+        :columns="columns"   //列名
+        :showPagination="true" //是否分页
+        :dataSource="tableData" //数据来源
+        :fetch="loadDataList" //数据请求方法（是否在组件初始化时获取数据）
+        :initFetch="false"    //初始化请求
+        :options="tableOptions" //表格配置项（有没有checkbox/表格高度设置）
+        @rowSelected="rowSelected" //行点击
+      >
+        <template #fileName="{ index, row }">  ///具名插槽
+        </template>
+   </Table>
+```
+插槽知识:
+要为具名插槽传入内容，我们需要使用一个含 v-slot 指令的 `<template>` 元素，并将目标插槽的名字传给该指令：
+v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写为 `<template #fileName>`。其意思就是“将这部分模板片段传入子组件的 header 插槽中”。
+由表格组件传递 index（索引）, row（表格数据对象）
+
 
 ***
 
