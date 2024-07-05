@@ -149,25 +149,25 @@ app.component("Table",Table)
 ```
 基础组件我写在了另一层，点击查看![alt text](625A6EF4.png)
 
-| 组件名称        |      简述      |
-| ------------- | :-----------: |
-| [表格](./component.md#table) | 二次封装el-table |  |
-| [头像](./component.md#avatar)    |  上传头像的组件    |
-| 弹窗 |   二次封装el-Dialog    |
-| 弹窗 |   二次封装el-Dialog    |
+| 组件名称                      |       简述        |
+| ----------------------------- | :---------------: |
+| [表格](./component.md#table)  | 二次封装el-table  |  |
+| [头像](./component.md#avatar) |  上传头像的组件   |
+| 弹窗                          | 二次封装el-Dialog |
+| 弹窗                          | 二次封装el-Dialog |
 
 ## 通用方法封装
 在目录 @/utils 下，封装了通用方法。<br>
 公用的js函数，目的仍然是复用、高效。<br>
 
 通用方法我写在了另一层，点击查看![alt text](625A6EF4.png)
-| 方法名称        |      简述      |
-| ------------- | :-----------: |
-| [Confirm.js](./utils.md#confirm) | 提示框，二次封装Confirm |  |
-| [Message.js](./component.md#table)    |  消息提示，二次封装Confirm   |
-|  [Request.js](./component.md#table)   |   请求，二次封装el-Dialog    |
-|  [Utils.js](./component.md#table)   |   工具类，文件大小计算    |
-|  [Verify.js](./utils.md#verify)   |  表单的自定义校验    |
+| 方法名称                           |           简述            |
+| ---------------------------------- | :-----------------------: |
+| [Confirm.js](./utils.md#confirm)   |  提示框，二次封装Confirm  |  |
+| [Message.js](./component.md#table) | 消息提示，二次封装Confirm |
+| [Request.js](./component.md#table) |  请求，二次封装el-Dialog  |
+| [Utils.js](./component.md#table)   |   工具类，文件大小计算    |
+| [Verify.js](./utils.md#verify)     |     表单的自定义校验      |
 ## 登录页面
 * [undraw登录背景图片网站](https://undraw.co/search)<br>
 样式书写不再阐释，主要解释代码原理
@@ -688,10 +688,52 @@ const logout = async () => {
    </Table>
 ```
 插槽知识:
-要为具名插槽传入内容，我们需要使用一个含 v-slot 指令的 `<template>` 元素，并将目标插槽的名字传给该指令：
-v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写为 `<template #fileName>`。其意思就是“将这部分模板片段传入子组件的 header 插槽中”。
-由表格组件传递 index（索引）, row（表格数据对象）
+要为具名插槽传入内容，我们需要使用一个含 v-slot 指令的 `<template>` 元素，并将目标插槽的名字传给该指令：<br>
+v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写为 `<template #fileName>`。其意思就是“将这部分模板片段传入子组件的 header 插槽中”。<br>
+由表格组件传递 index（索引）, row（表格数据对象）<br>
 
+ **插槽图标**<br>
+> Icon.vue
+  * 如果有封面缩略图，返回缩略图 URL。<br>
+  - 否则，根据文件类型或自定义图标名称匹配图标。<br>
+  - 返回图标 URL。<br>
+   **示例：**
+    ```html
+    <Icon :cover="row.fileCover" :width="32" ></Icon>
+    ```
+
+   **插槽：** 
+   * 根据类型渲染图标：如果文件类型为视频或音频且状态为已转码，显示封面缩略图.否则，根据文件夹类型显示默认图标。<br>
+   ```
+      <template #fileName="{ row }">
+      <div class="file-item">
+        <template v-if="(row.fileType==3 || row.fileType==1 ) && row.status == 2">
+          <Icon :cover="row.fileCover" :width="32" ></Icon>
+        </template>
+        <template v-else>
+          <Icon v-if="row.folderType == 0 " :fileType="row.fileType"></Icon>
+          <Icon v-if="row.folderType == 1 " :fileType= 0 ></Icon>
+        </template>
+        ...
+      </div>
+    </template>
+  ```
+
+
+ **显示操作按钮：**
+
+ 使用js实现css ::hover功能,鼠标进入和离开，定义鼠标事件
+```
+ <template #fileName="{ row }">
+        <div class="file-item" @mouseenter="showOp(row)" @mouseleave="cancelShowOp(row)"   >
+          <template v-if="row.showOp && row.filelId && row.status == 2">
+            <span class="iconfont icon-share1">分享</span>
+          </template>
+</template>
+```
+     鼠标事件： ` @mouseenter` 和 ` @mouseleave ` 
+  *  showOp 和 cancelShowOp 属性： 控制操作按钮的显示和隐藏。<br>
+  *  showOp() 和 cancelShowOp() 函数： 处理鼠标进入和离开事件，显示或隐藏操作按钮。<br>
 
 ***
 
@@ -701,43 +743,43 @@ v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写�
 
 #### 组件名称代码解释
 
-- **Main.vue（父组件）使用:**
-  - 使用`http-request`指令将`addFile`方法绑定到一个HTTP请求事件上。
-  - 定义了一个自定义事件"addFile"，并通过`emit`函数触发该事件。
+ **Main.vue（父组件）使用:**
+ 使用`http-request`指令将`addFile`方法绑定到一个HTTP请求事件上。
+   定义了一个自定义事件"addFile"，并通过`emit`函数触发该事件。
 
-- **Framework.vue（路由子组件）:**
-  - 监听来自Main.vue的"addFile"事件，并调用`addFile`方法进行处理。
-  - 在`addFile`方法中，设置`showUploader.value`为true以显示Uploader组件，调用`uploaderRef`引用的Uploader组件的`addFile`方法。
+ **Framework.vue（路由子组件）:**
+  监听来自Main.vue的"addFile"事件，并调用`addFile`方法进行处理。
+ 在`addFile`方法中，设置`showUploader.value`为true以显示Uploader组件，调用`uploaderRef`引用的Uploader组件的`addFile`方法。
 
-- **Uploader.vue（直接子组件）:**
-  - 定义了`addFile`方法，用于接收文件和文件父级ID进行具体的上传文件操作。
-  - 使用`defineExpose`函数将`addFile`方法暴露给其他组件以供调用。
+ **Uploader.vue（直接子组件）:**
+   定义了`addFile`方法，用于接收文件和文件父级ID进行具体的上传文件操作。
+   使用`defineExpose`函数将`addFile`方法暴露给其他组件以供调用。
 
 #### 协作过程：
 
-- Main.vue组件（路由子组件）中负责选择文件，然后通过自定义事件的方式触发Framework.vue组件的`addFile`方法，并且传递了`file`这个blob。
-- 在Framework.vue组件中，主动显示`el-popver`组件，最后调用Uploader.vue组件的上传方法，并传入`file`这个blob。
-- 文件上传完成后，Uploader.vue组件通过自定义事件通知Framework.vue组件，Framework.vue再通过`router-view`的组件写法调用路由子组件中所暴露的方法去刷新文件列表。
+ Main.vue组件（路由子组件）中负责选择文件，然后通过自定义事件的方式触发Framework.vue组件的`addFile`方法，并且传递了`file`这个blob。
+ 在Framework.vue组件中，主动显示`el-popver`组件，最后调用Uploader.vue组件的上传方法，并传入`file`这个blob。
+ 文件上传完成后，Uploader.vue组件通过自定义事件通知Framework.vue组件，Framework.vue再通过`router-view`的组件写法调用路由子组件中所暴露的方法去刷新文件列表。
 
 #### 文件上传逻辑
 
-- **Main.vue:**
-  - 当接收到HTTP请求时，调用`addFile`方法处理上传的文件。
-  - `addFile`方法接受一个`fileData`参数，通过`emit`函数触发了"addFile"事件，并传递文件和文件父级ID的对象作为参数。
+ **Main.vue:**
+   当接收到HTTP请求时，调用`addFile`方法处理上传的文件。
+   `addFile`方法接受一个`fileData`参数，通过`emit`函数触发了"addFile"事件，并传递文件和文件父级ID的对象作为参数。
 
-- **Framework.vue:**
-  - 使用`@addFile`监听器捕获Main.vue组件中触发的"addFile"事件。
-  - 在`addFile`方法中，解构出`file`和`filePid`属性，设置`showUploader.value`为true，并调用Uploader组件的`addFile`方法。
+ **Framework.vue:**
+   使用`@addFile`监听器捕获Main.vue组件中触发的"addFile"事件。
+   在`addFile`方法中，解构出`file`和`filePid`属性，设置`showUploader.value`为true，并调用Uploader组件的`addFile`方法。
 
-- **Uploader.vue:**
-  - `addFile`方法接收`file`和`filePid`参数，进行上传文件的处理逻辑。
-  - 使用`defineExpose`函数将`addFile`方法暴露出来。
+ **Uploader.vue:**
+   `addFile`方法接收`file`和`filePid`参数，进行上传文件的处理逻辑。
+   使用`defineExpose`函数将`addFile`方法暴露出来。
 
 #### H5+C3部分：
 
-- 两个`span`为标题
-- `el-progress`进度条，包含图标和标签
-- `el-progress`（转圈的图标）
+ 两个`span`为标题
+ `el-progress`进度条，包含图标和标签
+ `el-progress`（转圈的图标）
 
 #### 将文件添加到下载列表
 
