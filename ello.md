@@ -12,18 +12,19 @@
 
 支持原创源码，购买商城:[easyshop](http://easyshop.wuhancoder.com/),接单团队支持各种基于罗老师的源码二次开发，欢迎咨询
 
-此笔记会**持续更新**， ，笔记内容均为个人总结，可以在群聊里提出建议，高强度水群。
+此笔记会**持续更新**，笔记内容均为个人总结，可以在群聊里提出建议，高强度水群。
 
-我的Gitee笔记地址，给我一个小小的Start吧！：[Herry (gitee.com)](https://gitee.com/x121318/easy-pan)
+我的Gitee笔记地址，给我一个小小的Start吧！：[Herry (gitee.com)](https://gitee.com/x121318/easy-cloud-disk)
 
 
-欢迎你加入罗老师的群聊和罗老师一起探讨技术上的问题，一个人只能闭门造车，一起探讨难点才能走得更远(记得视频多刷刷弹幕)
+
 
 ✨无私奉献，用爱发电，欢迎赞助
 
 > [!TIP]
-> 祝你学习愉快，未来可期~
-
+> 欢迎你加入罗老师的群聊和群友一起探讨技术上的问题，一起学习，一起进步，一起成长，一起成为更好的自己。<br>
+> 祝你学习愉快，未来可期~<br>
+<!-- 
 [vitepress官方文档](https://vitepress.dev/zh/guide/markdown#table-of-contents) ☀️
 [markdown文档 ](https://yiov.top/daily/markdown/#%E8%B6%85%E9%93%BE%E6%8E%A5)☀️
-[ vitepress主题](https://vitepress.yiov.top/style.html#%E7%BB%84%E6%88%90)
+[ vitepress主题](https://vitepress.yiov.top/style.html#%E7%BB%84%E6%88%90) -->

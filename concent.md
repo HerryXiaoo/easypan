@@ -737,9 +737,107 @@ v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写�
 
 ***
 
+
 ## 上传文件
+> [!TIP]
+> 《本项目核心》
 
 ### 子父父子传参 封装组件
+> uploader.vue
+
+html5部分仍然一笔带过<br>
+:class绑定动态元素，根据item对象中的status属性值动态设置class和style属性。<br>
+:style动态设置 span 元素的颜色, STATUS 对象中根据 item.status 获取对应的 color 属性，并将其作为内联样式的
+```
+     <span
+      :class="['iconfont', 'icon-' + STATUS[item.status].icon]"
+      :style="{ color: STATUS[item.status].color }"
+     ></span>
+```
+#### 1.computeMD5计算md5函数
+首先列重点在js-spark-md5这个库，他可以对文件进行分块读取，然后计算md5值，文档在此：我做了翻译 -> [点此跳转](./knowledge.md#md5Spark)<br>
+首先获取文件对象
+` chunkSize `就是定义的切片大小，可以在这里调整每次传几片
+```
+//计算md5
+const computeMD5 = (fileItem) => {
+  // 获取文件对象
+  let file = fileItem.file;
+  // 获取文件切片方法
+  let blobSlice =  每个浏览器不同的策略
+  // 计算文件切片数量（向上取整46.7片就取47片）
+  let chunks = Math.ceil(file.size / chunkSize);
+  // 当前切片索引
+  let currentChunk = 0;
+  // 创建MD5计算对象
+  let spark = new SparkMD5.ArrayBuffer();
+  // 创建文件读取对象
+  let fileReader = new FileReader();
+  // 记录开始时间
+  let time = new Date().getTime();
+  //file.cmd5 = true;
+
+  // 读取下一个切片（开始递归）
+  let loadNext = () => {
+    // 计算当前切片的起始位置和结束位置
+    let start = currentChunk * chunkSize;
+    let end = start + chunkSize >= file.size ? file.size : start + chunkSize;
+    // 读取当前切片（读取文件，传入文件/开始分片大小/结束分片大小）
+    fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
+  };
+
+  // 读取第一个切片
+  loadNext();
+  // 返回一个Promise对象
+  return new Promise((resolve, reject) => {
+    // 根据文件uid获取文件对象
+    let resultFile = getFileByUid(file.uid);
+    // 文件读取完成
+    fileReader.onload = (e) => {
+      // 将读取到的切片添加到MD5计算对象中
+      spark.append(e.target.result);
+      // 切片索引加1
+      currentChunk++;
+      // 如果还有未读取的切片，继续读取
+      if (currentChunk < chunks) {
+        // 计算进度（向下取整）
+        let percent = Math.floor((currentChunk / chunks) * 100);
+        // 更新文件对象进度
+        resultFile.md5Progress = percent;
+        // 读取下一个切片
+        loadNext();
+      } else {
+        // 计算MD5值
+        let md5 = spark.end();
+        // 释放缓存
+        spark.destroy(); //释放缓存
+        // 更新文件对象进度
+        resultFile.md5Progress = 100;
+        // 更新文件对象状态
+        resultFile.status = STATUS.uploading.value;
+        // 更新文件对象MD5值
+        resultFile.md5 = md5;
+        // 解析完成，返回文件uid
+        resolve(fileItem.uid);
+      }
+    };
+    // 文件读取错误
+    fileReader.onerror = () => {
+      // 更新文件对象进度
+      resultFile.md5Progress = -1;
+      // 更新文件对象状态
+      resultFile.status = STATUS.fail.value;
+      // 解析完成，返回文件uid
+      resolve(fileItem.uid);
+    };
+  }).catch((error) => {
+    // 返回null
+    return null;
+  });
+};
+
+```
+# 23：15
 
 #### 组件名称代码解释
 
@@ -852,7 +950,68 @@ doing....
 
 ## 回收站
 
-doing....
+h5部分仍然不讲解
+js部分重复比较多，讲不重复的代码
+
+#### 1.多选：
+rowSelected 函数并传入一系列行数据时，它会提取每行的 fileId 并更新 selectFileIdList数组
+
+```
+const selectFileIdList = ref([]);
+const rowSelected = (rows) => {
+  selectFileIdList.value = [];
+  rows.forEach((item) => {
+    selectFileIdList.value.push(item.fileId);
+  });
+};
+```
+
+#### 2.批量还原/批量删除同理：
+其实所有发请求的代码都大差不差，区别就在于服务的业务不同
+首先判断是否有选中的文件，没有就return。之后传入selectFileIdList数组。用join方法给每一个数组的id用逗号分隔，然后发送完请求之后刷新列表
+```
+// 定义一个还原批量的函数
+const revertBatch = () => {
+  // 如果选中的文件id列表为空，则返回
+  if (selectFileIdList.value.length == 0) {
+    return;
+  }
+  // 弹出确认框，询问是否确定要还原这些文件
+  proxy.Confirm(`你确定要还原这些文件吗？`, async () => {
+    // 发送请求，将选中的文件id列表作为参数传递给后端
+    let result = await proxy.Request({
+      url: api.recoverFile,
+      params: {
+        fileIds: selectFileIdList.value.join(","),
+      },
+    });
+    // 如果请求失败，则返回
+    if (!result) {
+      return;
+    }
+    // 重新加载数据列表
+    loadDataList();
+  });
+};
+```
+
+#### 3.删除，主要是defineEmits：
+> defineEmits的原理主要基于Vue 3的事件系统和响应式原理。
+> 当在子组件中使用defineEmits定义事件时，Vue会在内 部创建一个事件映射，将事件名与对应的事件处理函数关联起来。
+> 当子组件中的某个事件被触发时，例如通过emit函数调用，Vue会根据之前创建的事件映射找到对应的事件处理函数，
+> 执行它。这个过程是响应式的，意味着当事件处理函数内部的状态发生变化时，Vue能够自动检测到并更新相关的DOM。
+
+
+在上传完之后会emit 一个reload事件，然后父组件会监听到这个事件，然后调用getUseSpace方法刷新数据（当触发relaod方法时，就会调用父组件的函数）
+``` 
+//字组件
+const emit = defineEmits(["reload"]); 
+ emit("reload"); 
+
+//父组件：
+    @reload="getUseSpace" 
+```
+
 
 ***
 
