@@ -1,6 +1,6 @@
 ## 作者：Herry同学 <Badge type="tip" text="^beta" />
 
-毕业于中国哔哩哔哩大学、抖音职业技术高校双一流学士学位，师从ChatGPT，cv工程师<br>
+毕业于中国哔哩哔哩大学、抖音职业技术高校双一流学士学位，师从ChatGPT，cv工程师✧(≖ ◡ ≖✿)<br>
 
 笔记源码出自b站 **<span style="border-bottom:2px dashed #00ABE3;">up程序员老罗</span>**<br>
 
