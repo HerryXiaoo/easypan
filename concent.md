@@ -19,23 +19,26 @@
 > `vite` + `vue3` + `axios` + `pinia` + `router` + `js`
 ***
 
-
-## 环境部署
-#### 使用代码片段：
+## 前言
 <span style="font-weight:bolder; color:#FE6C37">工欲善其事，必先利其器。</span>
 计算机不是文科，不是天天拿记事本写代码、反复背代码单次就能学会的，所以不要折磨自己，能省事则省事，<br>
 配置一个自己的代码片段，重点放在代码的思考，不要把时间浪费在重复劳动上，不然和新时代农民工有什么区别？<br>
-对于代码建议，我建议买一份源码，把不必要的css直接拷贝，遇到问题可以替换源码查找病因，然后一步步找问题所在<br>
-<span style="border-bottom:2px dashed #FE6C37;">代码片段不生效解决方法：新建一个新的全局代码片段文件</span>
+对于代码建议，我建议买一份源码，把不必要的css直接拷贝，遇到问题可以替换源码查找病因，然后一步步找debugger问题所在<br>
+<span style="border-bottom:2px dashed #3512C7;">代码片段不生效解决方法：新建一个新的全局代码片段文件</span>
 #### 友情链接
 * [老罗的Vscode代码片段](https://wwur.lanzout.com/ini770ngg78b)（密码:`fvmy`）
 * [老罗的EasyShop](http://easyshop.wuhancoder.com )
 * [老罗的所有免费资料](https://docs.qq.com/doc/DY1VMamFaWUttWnhi)<br>
 
 
+## 环境部署
+
 #### 安装Node.js
 版本要求：v16.20.0
 * [Node.js下载](https://nodejs.org/download/release/v16.20.2/node-v16.20.2-x64.msi)
+
+**node建议：使用nvm安装，方便管理多个版本，可以随时切换**<br>
+**镜像建议：使用nrm安装，方便切换镜像源，下载更快**<br>
 
 ```
 node -v
@@ -153,7 +156,7 @@ app.component("Table",Table)
 | ----------------------------- | :---------------: |
 | [表格](./component.md#table)  | 二次封装el-table  |  |
 | [头像](./component.md#avatar) |  上传头像的组件   |
-| 弹窗                          | 二次封装el-Dialog |
+| [图标](./component.md#icon)    | 自行封装的预览不同了类型图标的组件 |
 | 弹窗                          | 二次封装el-Dialog |
 
 ## 通用方法封装
@@ -701,6 +704,45 @@ v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写�
     ```html
     <Icon :cover="row.fileCover" :width="32" ></Icon>
     ```
+**渲染列表**<br>
+渲染列表代码：
+ ```      
+const loadDataList = async () => {
+  let params = {
+    pageNo: ····,
+    pageSize: ····,
+    fileNameFuzzy: ····,
+    category: ····,
+    filePid: ····,
+  };
+  if (params.category !== "all") {
+    delete params.filePid;
+  }
+  ····
+};
+```
+看懂参数就好,在这里发的五个参数：分页/模糊查询/分类/文件pid<br>
+着重讲一下分类 category和pid参数 ，在这里路由配置是这样的：<br>
+```
+   {
+          path: '/main/:category',
+          name: '首页',
+          meta: {
+            needLogin: true,
+            menuCode: "main"
+          },
+          component: () => import("@/views/main/Main.vue")
+        },
+ ```
+***路由参数*** :category<br>
+:category 是一个占位符，代表动态的部分，可以根据 URL 的不同部分来动态加载和显示内容，不用为每一个不同的分类单独配置一个静态路由。这样设计的路由更灵活，维护也更加简单。<br>
+ 所以在这里只需要在路由跳转的时候，将分类作为参数传递即可以实现分类功能，例如：`this.$router.push({ name: '首页', params: { category: 'all' } })`<br>
+ 
+ ***Pid***：表示当前目录的父目录ID，用于标识文件所在的目录<br>
+ ` currentFolder.value.fileId `是当前活动目录的文件夹ID。它用于从服务器获取当前目录中的文件。<br>
+ 如果 category 不等于 "all"，则删除 params 对象中的 filePid 属性:因为分类中不不包含，在这里删除pid后端就可以知道，不需要文件目录层级<br>
+
+ [Icon组件，点击跳转](./component.md#icon)  
 
    **插槽：** 
    * 根据类型渲染图标：如果文件类型为视频或音频且状态为已转码，显示封面缩略图.否则，根据文件夹类型显示默认图标。<br>
@@ -718,11 +760,10 @@ v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写�
       </div>
     </template>
   ```
-
-
  **显示操作按钮：**
 
  使用js实现css ::hover功能,鼠标进入和离开，定义鼠标事件
+ @mouseenter="showOp(row)": 当鼠标光标移动到 file-item 元素上时，触发 showOp(row) 方
 ```
  <template #fileName="{ row }">
         <div class="file-item" @mouseenter="showOp(row)" @mouseleave="cancelShowOp(row)"   >
@@ -731,13 +772,29 @@ v-slot 有对应的简写 #，因此 `<template v-slot:fileName> `可以简写�
           </template>
 </template>
 ```
-     鼠标事件： ` @mouseenter` 和 ` @mouseleave ` 
+     鼠标事件： @mouseenter 和  @mouseleave <br>
   *  showOp 和 cancelShowOp 属性： 控制操作按钮的显示和隐藏。<br>
   *  showOp() 和 cancelShowOp() 函数： 处理鼠标进入和离开事件，显示或隐藏操作按钮。<br>
 
+在js代码中遍历 tableData 中的 list 数组，并将每一项的 showOp 属性设为 false。这一步操作确保所有行的操作按钮都被隐藏。（控制一下showOp的布尔值属性就可以完成）
+```
+const showOp = (row) => {
+  tableData.value.list.forEach((element) => {
+    element.showOp = false;
+  });
+  row.showOp = true;
+};
+
+const cancelShowOp = (row) => {
+  row.showOp = false;
+};
+```
+
+### 新建目录
+todo···
+### 文件重命名
+todo···
 ***
-
-
 ## 上传文件
 > [!TIP]
 > 《本项目核心》
