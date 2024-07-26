@@ -57,7 +57,7 @@ npm config set registry https://registry.npmmirror.com/
 #### 使用自己的图标样式：
 关键词搜索:`iconfont的使用与合并_iconfont怎么合并`
 #### 项目构建 elementPlus的引入：
-```mian.js
+```
 // 引入elemnt-plus
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -104,7 +104,7 @@ const config = reactive({
 │   ├── utils # 全局工具类<br>
 │   ├── views # 路由页面<br>
 │   ├── App.vue # 入口vue文件<br>
-│   └── main.js # 主入口文件<br>
+│   └── maain.js # 主入口文件<br>
 ├── index.html # 入口页面<br>
 ├── package.json # 项目配置文件<br>
 ├── vite.config.js # vite 配置<br>
@@ -129,7 +129,7 @@ import AvatarUpload from "../componts/AvatarUpload.vue";
 
 ```
 ##### 2.全局注册
-① 在 main.js 中，全局注册组件。代码如下：
+① 在 maain.js 中，全局注册组件。代码如下：
 ```
 import Table from '@/componts/Table.vue'
 app.component("Table",Table)
