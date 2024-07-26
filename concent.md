@@ -837,7 +837,6 @@ const computeMD5 = (fileItem) => {
 };
 
 ```
-# 23：15
 
 #### 组件名称代码解释
 
