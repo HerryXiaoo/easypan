@@ -8,7 +8,7 @@ export default defineConfig({
   description: "Herry herry Easy云盘 程序员老罗 easy云盘源码 easy云盘学习笔记 easy云盘源码分析", //作用：SEO
   //左上角logo
   themeConfig: {
-    logo: "/avatar.png",
+    logo: "/avatar.jpg",
     //顶部导航
     nav: [
       { text: '主页', link: '/' },

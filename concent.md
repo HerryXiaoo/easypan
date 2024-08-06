@@ -152,12 +152,12 @@ app.component("Table",Table)
 ```
 基础组件我写在了另一层，点击查看![alt text](625A6EF4.png)
 
-| 组件名称                      |       简述        |
-| ----------------------------- | :---------------: |
-| [表格](./component.md#table)  | 二次封装el-table  |  |
-| [头像](./component.md#avatar) |  上传头像的组件   |
-| [图标](./component.md#icon)    | 自行封装的预览不同了类型图标的组件 |
-| 弹窗                          | 二次封装el-Dialog |
+| 组件名称                      |                简述                |
+| ----------------------------- | :--------------------------------: |
+| [表格](./component.md#table)  |          二次封装el-table          |  |
+| [头像](./component.md#avatar) |           上传头像的组件           |
+| [图标](./component.md#icon)   | 自行封装的预览不同了类型图标的组件 |
+| 弹窗                          |         二次封装el-Dialog          |
 
 ## 通用方法封装
 在目录 @/utils 下，封装了通用方法。<br>
@@ -791,18 +791,209 @@ const cancelShowOp = (row) => {
 ```
 
 ### 新建目录
-todo···
-### 文件重命名
-todo···
+新建目录，在html结构上，主要是在文件列表的第一位占位，使用v-if来实现。<br>
+文件夹分为三步：1. 新建dom元素，2. 重命名文字<br>
+1. 新建文件夹
+  - 首先判断编辑状态
+  - 遍历 tableData.value.list，将所有文件夹的 showEdit 属性设置为 false。
+  - 设置当前为编辑状态
+  - 插入新文件夹对象（本地）
+```
+const newFolder = () => {
+  if(editing.value){
+    // 只能新建一个
+    return
+  }
+  tableData.value.list.forEach(element => {
+    element.showEdit = false;
+  });
+  editing.value = true;
+  tableData.value.list.unshift({
+   ------
+  });
+  nextTick(() => {
+    editNameRef.value.focus(); //聚焦
+  }); 
+};
+```
+> 本步骤小思考：为什么没有发送请求，仅仅是对于tableData数组的本地增删改查，为什么刷新仍然存在？<br>
+> - 重命名是和新建目录一起走的，新建目录不就是另一个方式的重命名吗？所以代码结构，js单引擎模式非常适合这么走<br>
+> - 同步任务（新建文件,本地数组更改完成）-> 异步任务（重命名，解构当前数组，发送请求，成功后更新当前数组）<br>
+
+### 文件重命名（接口）
+1. 解构列表数据
+2. 条件判断
+3. 条件判断是重命名还是新建文件
+4. 添加数据，改变状态
+```
+const saveNameEdit =  async(index) => {
+
+   //#herry:es6语法，解构赋值允许你从数组或对象中提取数据，并将其赋值给变量。
+  //#herry:tableData.value.list[index] 对象中提取 fileId、filePid 和 fileNameReal 属性，
+  //#herry:并将它们分别赋值给同名的常量变量 fileId、filePid 和 fileNameReal。
+
+  const { fileId,filePid,fileNameReal} = tableData.value.list[index];
+ 
+  if(fileNameReal =="" || fileNameReal.indexOf("/")!=-1){
+    -----
+    return
+  }
+
+//#herry:这里做的是判断是新建文件夹还是重命名
+//#herry:可以拿三元运算符优雅简洁一下：`let url = fileId === "" ? api.newFoloder : api.rename;`
+  let url = api.rename;
+  if(fileId==""){
+    url = api.newFoloder;
+  }
+
+//#herry:带参数发请求
+  let result = await proxy.Request({
+    url:url,
+    params:{
+      ---
+    },
+  });
+      ----
+//#herry:更新数组到index处/改变修改状态
+  tableData.value.list[index] = result.data;
+  editing.value = false;
+}
+```
+**取消操作**
+1. 首先仍然是结构数组，提取索引信息
+2. 判断是否有fileid（新建还是修改，新建的文件是没有id的）
+   - 编辑 退出编辑状态
+   - 新建 删除数组/结束编辑状态 
+
+```
+// 取消
+const cancelNameEdit =(index)=> {
+  const fileData = tableData.value.list[index];
+  if(fileData.fileId){
+  //#herry: fileData.showEdit表示当前文件的编辑状态，控制新建文件夹列表dom元素的显隐
+    fileData.showEdit = false
+  }else {
+    tableData.value.list.splice(index,1);
+    //#herry: editing.value 表示全局布尔值，控制全局文件的编辑状态
+    editing.value = false;
+  }
+};
+```
+### 文件重命名 实现
+1. 检查当前状态是否有新建的文件夹
+2. 遍历元素，关闭编辑状态
+3. 指定当前编辑文件，进入编辑状态
+4. 根据文件名判断后缀：
+   - folderType = 0 文件，那么他的后缀就是 名称 + .xx(.pdf/.png)
+   - 反之是对应的文件，那么就将他的后缀设置成空
+5. 将全局编辑状态设为空，文件重命名实现
+**tips:**这里仍然是纯前端操作，首先更改名称，其次请求接口同步任务 -> 异步任务
+```
+// 对文件名字进行编辑
+const editFileName = (index) => {
+  //#herry:判断编辑状态，修改文件索引为1（上面应该设置成0，但是这里按罗老师来）
+  if(tableData.value.list[0].fileId==""){
+    tableData.value.list.splice(0,1)
+    index = index - 1;
+  }
+  
+  //#herry:关闭所有元素的编辑状态
+  tableData.value.list.forEach((element)=>{
+    element.showEdit = false
+  });
+  
+  //#herry:获取索引
+  let currentData = tableData.value.list[index];
+  currentData.showEdit  = true;
+
+  //#herry: str.subString介绍 : 提取字符串的子字符串，str.substring(indexStart, indexEnd（可选，省略则直接提取到末尾）)
+  //#herry: str.indexOf介绍：查找子字符串在字符串中首次出现的位置，str.indexOf(searchValue, fromIndex（可选）：开始查找的位置索引。默认值为 0)
+  
+    //#herry: subString（0，xxx）:从第一个元素到.之前的子字符串复制给fileSuffix，就可以在文件列表显示.pdf/.png的效果
+
+
+ //#herry:  aaa.png    currentData.fileNameReal = aaa   （从第0位开始查到到-.字符串的名称）（aaa）
+ //                     currentData.fileSuffix  = .png   （这个参数只有indexStart，那么就是currentData.fileName的.就是开始位置））(.png)
+  // 编辑文件
+  if(currentData.folderType==0){
+    currentData.fileNameReal = currentData.fileName.subString(0,currentData.fileName.indexOf("."));
+    currentData.fileSuffix =  currentData.fileName.subString(currentData.fileName.indexOf("."));
+  }else{
+   //#herry:文件夹没有后缀，不需要截取字符串，赋值空为了严谨
+    currentData.fileNameReal = currentData.fileName;
+    currentData.fileSuffix = "";
+  }
+  editing.value = true;
+  nextTick(()=>{
+    editNameRef.value.focus();
+  })
+}
+```
+
+
 ***
 ## 上传文件
 > [!TIP]
-> 《本项目核心》
+> 《到本项目核心啦》
 
 ### 子父父子传参 封装组件
-> uploader.vue
 
-html5部分仍然一笔带过<br>
+### 组件名称代码解释
+
+| 组件名称          | 说明                                                                                                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Main.vue**      | 使用 `:http-request` 指令将 `addFile` 方法绑定到一个 HTTP 请求事件上。<br>定义了一个自定义事件 "addFile"，并通过 `emit` 函数触发该事件。                                                                              |
+| **Framework.vue** | 监听来自 Main.vue 的 "addFile" 事件，并调用 `addFile` 方法进行处理。<br>在 `addFile` 方法中，设置 `showUploader.value` 为 `true` 以显示 Uploader 组件。<br>调用 `uploaderRef` 引用的 Uploader 组件的 `addFile` 方法。 |
+| **Uploader.vue**  | 定义了 `addFile` 方法，用于接收文件和文件父级 ID 进行具体的上传文件操作。<br>使用 `defineExpose` 函数将 `addFile` 方法暴露给其他组件以供调用。                                                                        |
+
+#### 1.协作过程
+  Main.vue(选择文件 传递到Framework.vue)  ->    Framework.vue(子组件为Uploader.vue，做中间人传递过去)  -> Uploader.vue接收文件
+  1. Main.vue 组件负责选择文件，然后通过自定义事件的方式触发 Framework.vue 组件的 addFile 方法， addFile 方法接受一个 fileData 参数，通过 emit 函数触发了 addFile 事件，并传递文件和文件父级ID的对象作为参数。
+  2. 在 Framework.vue 组件中，使用 @addFile 监听器捕获Main.vue组件中触发的 addFile 事件。在 addFile 方法中，解构出 file 和 filePid 属性，调用触发Uploader组件的 addFile 方法。
+  3. 最后调用这个 Uploader.vue 组件的 addFile 方法，file 和 filePid 也就传了进来，完成文件上传逻辑的转移。
+   
+  tips: 文件上传完成后，Uploader.vue 组件也需要通过自定义事件的方式通知 Framework.vue 组件，然后 Framework.vue 再通过 defineExpose  暴露方法，通知Framework.vue 刷新文件列表。
+#### 2.代码思路
+ 1. main.vue
+  点击上传，触发addFile方法，包含fileData参数，其中包含了要上传的文件的相关数据。
+  在addFile方法内部，通过emit函数触发了"addFile"事件，并将包含文件和文件父级ID的对象作为参数传递给付组件。（Framework）
+  ```
+  :http-request="addFile"
+  // 上传文件
+  const emit = defineEmits("addFile")
+  const addFile = (fileData) => {
+    emit("addFile",{file:fileData.file,filePid:currentFoloder.value.fileId})
+  } 
+  ```
+  2. Framework.vue(在这里主要做中间量转换)
+   在Uploader.vue文件中，addFile方法接收到file和filePid参数，并可以在该方法体内进行上传文件的相关处理逻辑。
+   通过使用defineExpose函数将addFile方法暴露出来，让Uploader.vue直接调用addFile方法。
+   ```
+    <component :is="Component" @addFile="addFile"></component>
+    <Uploader ref="uploaderRef"></Uploader>
+
+
+    js:
+
+      const addFile = (data) => {
+        const {file,filePid} = data;
+        showUploader.value = true;
+        uploaderRef.value.addFile(file,filePid)
+      }
+
+   ```
+  3. Uploader.vue
+   在Uploader.vue文件中，addFile方法接收到file和filePid参数，并可以在该方法体内进行上传文件的相关处理逻辑。
+   最后，通过使用defineExpose函数将addFile方法暴露出来，以便父组件或其他组件可以直接调用Uploader组件的addFile方法。
+  ```
+      const addFile = (file ,filePid) => {
+    }
+    defineExpose(addFile)
+  ``` 
+  **ending:绕了一圈后file和filepid传到了传输文件组件**
+
+
+#### 文件上传01/02一部分-- html5部分仍然一笔带过<br>
 :class绑定动态元素，根据item对象中的status属性值动态设置class和style属性。<br>
 :style动态设置 span 元素的颜色, STATUS 对象中根据 item.status 获取对应的 color 属性，并将其作为内联样式的
 ```
@@ -811,10 +1002,50 @@ html5部分仍然一笔带过<br>
       :style="{ color: STATUS[item.status].color }"
      ></span>
 ```
+
+ 两个`span`为标题
+ `el-progress`进度条，包含图标和标签
+ `el-progress`（转圈的图标）
+
+#### 将文件添加到下载列表
+
+1. 定义了一个名为`STATUS`的常量对象，用于表示文件上传的不同状态。
+2. 创建了一个`fileItem`对象来存储文件的信息，并插入到文件列表的最前面。
+3. 判断文件总大小是否为0，设置文件状态并异步计算文件的MD5值。
+4. 调用`uploadFile`函数上传文件，传入MD5值。
+
+***
+
+## 上传文件-md5分片
+
+### MD5流程
+🎉MD5流程主要包括 `初始化` 、 `计算MD5值` 和 `上传分片` 三个阶段。
+::: tip 具体步骤如下：
+1. **初始化**<br>
+获取文件对象：通过fileItem.file获取文件对象。<br>
+确定切片方法：根据浏览器兼容性确定文件切片方法，如File.prototype.slice、File.prototype.mozSlice或File.prototype.webkitSlice。<br>
+2. **计算MD5值**<br>
+计算切片数目：根据文件大小和每个切片的大小计算出切片的总数。<br>
+初始化索引：将当前处理的切片索引currentChunk初始化为0。<br>
+创建MD5实例：使用SparkMD5.ArrayBuffer创建一个用于计算MD5的实例。<br>
+创建文件读取器：使用FileReader对象用于读取文件内容。<br>
+读取并处理切片：定义loadNext函数，用于读取当前索引对应的切片内容，并将其添加到MD5实例中进行计算。然后更新索引，并在还有剩余切片的情况下继续读取下一个切片。<br>
+3. **上传分片**<br>
+获取文件UID：通过getFileByUid函数根据文件的UID获取文件对象。<br>
+上传文件：使用uploadFile函数，根据文件的UID和初始分片索引开始上传文件。在循环中检查是否有删除或暂停上传的请求，并根据分片索引上传文件至服务器。<br>
+添加文件到列表：通过addFile函数接收父文件信息，创建文件对象，并计算其MD5值后添加到文件列表中。<br>
+:::
+***
+![alt text](./img/uploadtips.jpg)
+**锚点----文件上传02**
 #### 1.computeMD5计算md5函数
 首先列重点在js-spark-md5这个库，他可以对文件进行分块读取，然后计算md5值，文档在此：我做了翻译 -> [点此跳转](./knowledge.md#md5Spark)<br>
-首先获取文件对象
-` chunkSize `就是定义的切片大小，可以在这里调整每次传几片
+
+chunkSize就是定义的切片大小，可以在这里调整每次传几片<br>
+` const chunkSize = 1024 * 1024 * 5;  //以5M来分片 `
+
+***
+
 ```
 //计算md5
 const computeMD5 = (fileItem) => {
@@ -830,11 +1061,8 @@ const computeMD5 = (fileItem) => {
   let spark = new SparkMD5.ArrayBuffer();
   // 创建文件读取对象
   let fileReader = new FileReader();
-  // 记录开始时间
-  let time = new Date().getTime();
-  //file.cmd5 = true;
 
-  // 读取下一个切片（开始递归）
+  // 读取每一个切片（开始递归）
   let loadNext = () => {
     // 计算当前切片的起始位置和结束位置
     let start = currentChunk * chunkSize;
@@ -842,12 +1070,11 @@ const computeMD5 = (fileItem) => {
     // 读取当前切片（读取文件，传入文件/开始分片大小/结束分片大小）
     fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
   };
-
-  // 读取第一个切片
   loadNext();
+
   // 返回一个Promise对象
   return new Promise((resolve, reject) => {
-    // 根据文件uid获取文件对象
+    // 根据文件uid获取文件对象（每个分片文件uid对应一个文件）
     let resultFile = getFileByUid(file.uid);
     // 文件读取完成
     fileReader.onload = (e) => {
@@ -863,14 +1090,16 @@ const computeMD5 = (fileItem) => {
         resultFile.md5Progress = percent;
         // 读取下一个切片
         loadNext();
-      } else {
+      } 
+      //分片传输完成
+      else {
         // 计算MD5值
         let md5 = spark.end();
         // 释放缓存
-        spark.destroy(); //释放缓存
-        // 更新文件对象进度
+        spark.destroy();
+        // 更新文件对象进度为100%
         resultFile.md5Progress = 100;
-        // 更新文件对象状态
+        // 更新文件对象状态为完成
         resultFile.status = STATUS.uploading.value;
         // 更新文件对象MD5值
         resultFile.md5 = md5;
@@ -894,95 +1123,217 @@ const computeMD5 = (fileItem) => {
 };
 
 ```
-
-#### 组件名称代码解释
-
- **Main.vue（父组件）使用:**
- 使用`http-request`指令将`addFile`方法绑定到一个HTTP请求事件上。
-   定义了一个自定义事件"addFile"，并通过`emit`函数触发该事件。
-
- **Framework.vue（路由子组件）:**
-  监听来自Main.vue的"addFile"事件，并调用`addFile`方法进行处理。
- 在`addFile`方法中，设置`showUploader.value`为true以显示Uploader组件，调用`uploaderRef`引用的Uploader组件的`addFile`方法。
-
- **Uploader.vue（直接子组件）:**
-   定义了`addFile`方法，用于接收文件和文件父级ID进行具体的上传文件操作。
-   使用`defineExpose`函数将`addFile`方法暴露给其他组件以供调用。
-
-#### 协作过程：
-
- Main.vue组件（路由子组件）中负责选择文件，然后通过自定义事件的方式触发Framework.vue组件的`addFile`方法，并且传递了`file`这个blob。
- 在Framework.vue组件中，主动显示`el-popver`组件，最后调用Uploader.vue组件的上传方法，并传入`file`这个blob。
- 文件上传完成后，Uploader.vue组件通过自定义事件通知Framework.vue组件，Framework.vue再通过`router-view`的组件写法调用路由子组件中所暴露的方法去刷新文件列表。
-
-#### 文件上传逻辑
-
- **Main.vue:**
-   当接收到HTTP请求时，调用`addFile`方法处理上传的文件。
-   `addFile`方法接受一个`fileData`参数，通过`emit`函数触发了"addFile"事件，并传递文件和文件父级ID的对象作为参数。
-
- **Framework.vue:**
-   使用`@addFile`监听器捕获Main.vue组件中触发的"addFile"事件。
-   在`addFile`方法中，解构出`file`和`filePid`属性，设置`showUploader.value`为true，并调用Uploader组件的`addFile`方法。
-
- **Uploader.vue:**
-   `addFile`方法接收`file`和`filePid`参数，进行上传文件的处理逻辑。
-   使用`defineExpose`函数将`addFile`方法暴露出来。
-
-#### H5+C3部分：
-
- 两个`span`为标题
- `el-progress`进度条，包含图标和标签
- `el-progress`（转圈的图标）
-
-#### 将文件添加到下载列表
-
-1. 定义了一个名为`STATUS`的常量对象，用于表示文件上传的不同状态。
-2. 创建了一个`fileItem`对象来存储文件的信息，并插入到文件列表的最前面。
-3. 判断文件总大小是否为0，设置文件状态并异步计算文件的MD5值。
-4. 调用`uploadFile`函数上传文件，传入MD5值。
-
-***
-
-## 上传文件-md5分片
-
-### 理论流程
-MD5分片操作是将大文件分割成多个小块，并分别对这些小块进行MD5哈希计算的过程。这一过程的主要步骤包括：
-
-> 1.定义分片大小：首先，需要确定每个分片的大小，常见的分片大小有4KB、8KB等。<br>
-> 2.切割文件：按照预设的分片大小，将大文件切割成多个连续的小块。<br>
-> 3.计算MD5值：对每个分片分别进行MD5哈希计算，得到唯一的MD5值。<br>
-> 4.记录MD5值：将每个分片的MD5值记录下来，以备后续使用。<br>
-> 5.验证文件完整性：在文件传输或存储的过程中，接收方可以通过计算接收到的分片的MD5值，并与记录的MD5值进行比对，以验证文件的完整性。<br>
-
-### 本项目流程
-🎉本项目流程主要包括 `初始化` 、 `计算MD5值` 和 `上传分片` 三个阶段。
-::: tip 具体步骤如下：
-1. 初始化
-获取文件对象：通过fileItem.file获取文件对象。
-确定切片方法：根据浏览器兼容性确定文件切片方法，如File.prototype.slice、File.prototype.mozSlice或File.prototype.webkitSlice。
-2. 计算MD5值
-计算切片数目：根据文件大小和每个切片的大小计算出切片的总数。
-初始化索引：将当前处理的切片索引currentChunk初始化为0。
-创建MD5实例：使用SparkMD5.ArrayBuffer创建一个用于计算MD5的实例。
-创建文件读取器：使用FileReader对象用于读取文件内容。
-读取并处理切片：定义loadNext函数，用于读取当前索引对应的切片内容，并将其添加到MD5实例中进行计算。然后更新索引，并在还有剩余切片的情况下继续读取下一个切片。
-3. 上传分片
-获取文件UID：通过getFileByUid函数根据文件的UID获取文件对象。
-上传文件：使用uploadFile函数，根据文件的UID和初始分片索引开始上传文件。在循环中检查是否有删除或暂停上传的请求，并根据分片索引上传文件至服务器。
-添加文件到列表：通过addFile函数接收父文件信息，创建文件对象，并计算其MD5值后添加到文件列表中。
-:::
-***
+**函数 getFileByUid**：<br>
+主要作用就是查找文件：<br>
+使用 Array.prototype.find 方法在 fileList.value 数组中查找uid = 对用文件uid的文件对象。<br>
+```
+// 获取文件
+const getFileByUid = (uid) => {
+    let file = fileList.value.find(item => {
+        return item.file.uid == uid;
+    });
+    return file;
+};
+```
 
 ## 上传文件-上传
 
-doing....
+![alt text](./img/md5tips.jpg)
 
+### 分片上传流程
+✨上传流程主要包括 `分片上传` 和 `更新状态` 两个个阶段。
+
+::: tip 具体步骤如下：
+1. **分片上传**   
+- 从chunkIndex开始循环上传切片，判断删除/暂停操作，继续上传（本地）
+- 获取切片的文件对象后调用上传函数
+- 使用 proxy.Request 发送上传请求，上传当前切片 chunkFile。
+- 在 uploadProgressCallback 中更新已上传的大小和上传进度百分比。
+
+1. **更新状态**
+- 如果上传结果为空，则中断上传。
+- 更新文件的 fileId 和状态 status。
+- 更新当前切片的索引 chunkIndex。
+- 检查上传状态：
+
+如果上传状态为秒传或上传完成，更新上传进度为 100% 并触发上传回调 emit("uploadCallback")，然后中断上传。<br>
+
+:::
+***
+
+
+```
+// 上传文件
+const uploadFile = async (uid, chunkIndex) => {
+    // 如果没有指定初始的chunkIndex，默认为0，从头开始，目的是为了暂停继续，可以从暂停的那个分片开始继续上传
+    chunkIndex = chunkIndex ? chunkIndex : 0;
+    
+    // 获取当前要上传的文件对象
+    let currentFile = getFileByUid(uid);
+    const file = currentFile.file;
+    //获取文件总大小
+    const fileSize = currentFile.totalSize;
+    // 计算文件切片数目：文件大小/定义的切片大小 向上取整
+    const chunks = Math.ceil(fileSize / chunkSize); 
+
+    // 循环上传每一个切片
+    for (let i = chunkIndex; i < chunks; i++) {
+        // 检查是否有删除操作，如果有则中断上传
+        let delIndex = delList.value.indexOf(uid);
+        if (delIndex !== -1) {
+            delList.value.splice(delIndex, 1);
+            break;
+        }
+
+        // 获取最新的文件对象，确保文件状态是最新的
+        //必须，因为文件的每一个循环状态都不一样
+        currentFile = getFileByUid(uid);
+        
+        // 如果文件上传被暂停，则中断上传
+        if (currentFile.pause) {
+            break;
+        }
+
+        // 计算当前切片的起始位置和结束位置
+        let start = i * chunkSize;
+        let end = start + chunkSize >= fileSize ? fileSize : start + chunkSize;
+        // 获取当前切片的文件对象
+        let chunkFile = file.slice(start, end);
+
+        // 发送上传请求
+        let updateResult = await proxy.Request({
+            url: api.upload,
+            showLoading: false,
+            //文件类型file
+            dataType: "file",
+            params: {
+                file: chunkFile,
+                fileName: file.name,
+                fileMd5: currentFile.md5,
+                chunkIndex: i,
+                chunks: chunks,
+                fileId: currentFile.fileId,
+                filePid: currentFile.filePid,
+            },
+            showError: false,
+            errorCallback: (errorMsg) => {
+                // 如果上传出错，更新文件状态和错误信息
+                currentFile.status = STATUS.fail.value;
+                currentFile.errorMsg = errorMsg;
+            },
+            //更新上传进度
+            uploadProgressCallback: (event) => {
+                // 更新上传进度，获取对象上已上传的字节数
+                let loaded = event.loaded;
+                //如果字节数已经大于文件的总大小，那么就直接赋值100，避免出现101%的一处状态
+                if (loaded > fileSize) {
+                    loaded = fileSize;
+                }
+                //计算文件已上传的大小：索引 * 每块的大小 + 文件上传字节数
+                currentFile.uploadSize = i * chunkSize + loaded;
+                //计算上传进度，文件已上传大小 / 文件总大小 这时候是小数 *100得到进度      
+                         currentFile.uploadProgress = Math.floor(
+                    (currentFile.uploadSize / fileSize) * 100
+                );
+            },
+        });
+
+        // 如果上传请求失败，则中断上传
+        if (updateResult == null) {
+            break;
+        }
+
+        // 更新文件ID和状态
+        currentFile.fileId = updateResult.data.fileId;
+        currentFile.status = STATUS[updateResult.data.status].value;
+        currentFile.chunkIndex = i;
+
+        // 如果上传状态为秒传或上传完成，更新上传进度并触发上传回调
+        if (
+            updateResult.data.status === STATUS.upload_seconds.value ||
+            updateResult.data.status === STATUS.upload_finish.value
+        ) {
+            currentFile.uploadProgress = 100;
+            //作用：需要更新用户的剩余空间
+            emit("uploadCallback");
+            break;
+        }
+    }
+};
+```
+上传操作：
+```
+//开始上传
+const startUpload = (uid) => {
+  const currentFile = getFileByUid(uid);
+  currentFile.pause = false;
+  //获取文件 传入uid和索引
+  uploadFile(uid, currentFile.chunkIndex);
+};
+```
+暂停操作：
+```
+//暂停上传
+const pauseUpload = (uid) => {
+  //传入当前索引，改变状态为暂停
+  const currentFile = getFileByUid(uid);
+  currentFile.pause = true;
+};
+```
+删除操作：
+```
+//删除文件
+const delUpload = (uid, index) => {
+  //删除仅为本地删除
+  delList.value.push(uid);
+  fileList.value.splice(index, 1);
+};
+```
+> 上传文件done，在此之前本人至少观看视频五余遍，若有遗漏请指出 感谢
 ***
 
 ## 删除-移动文件
+多选操作：简单来说就是新建了个数组，然后把勾选的文件的fileId循环保存<br>
+定义数组 传参 操作列表  push到数组里  selectFileIdList就是选择框了<br>
+```
+//定义变量 声明空数组
+const selectFileIdList = ref ([]);
+//接受参数rows
+const rowSelected  =  (rows) => {  
+  //清空数组
+  selectFileIdList.value = [];  
+  //通过foreach遍历rows     
+  rows.forEach(item=>{         
+     // 添加元素fileid到selectFileIdList（数组）     
+    selectFileIdList.value.push(item.fileId); 
+  });
+};
+```
+**删除文件**
+罗老师代码里/实际项目里复用率最高的函数：
+1、表单校验/弹框确认
+2、发送函数，传递请求
+3、刷新列表
+```
+// 单个删除
+const delFile = (row) => {
+  proxy.Confirm(`你确定要删除【${row.fileName}】吗?删除的文件可在10天内通过回收站还原`)
+  async() => {
+    let result = await proxy.Request({          //异步操作删除文件，发送文件id
+      url:api.delFile,
+      params:{
+        fileIds:row.fileId,
+     //fileIds:selectFileIdList.value.join(",")  删除多个文件操作
+      },
+    });
+    if(!result){
+      return;     //回调
+    }
+    loadDataList();   列表数据重新加载 
+  }
+}
+```
 
-doing....
 
 ***
 
