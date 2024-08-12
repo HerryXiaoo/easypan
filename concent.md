@@ -8,12 +8,15 @@
 
 
 具体功能：
-> 1.  用户注册，登录，QQ快捷登录，发送邮箱验证码，找回密码。<br>
-> 2.  文件分片上传，断点续传，秒传，上传进度展示，文件预览，新建目录，文件重命名，文件移动，文件分享，删除，下载 等功能。<br>
-> 3.  文件分享列表，取消分享。<br>
-4.  回收站功能，还原文件，彻底删除。<br>
-5.  设置模块  1、超级管理员可以看到所有用户上传的文件，可以对文件下载，删除。 2、超级管理员可以对用户进行管理，给用户分配空间，禁用、启用用户3、超级管理员可以对系统进行设置，设置邮箱模板，设置用户注册初始化空间大小。<br>
-6.  用户通过分享链接和分享码预览下载其他人分享的文件，同时也可以将文件保存到自己的网盘。
+> 1. 用户注册，登录，QQ快捷登录，发送邮箱验证码，找回密码。<br>
+> 2. 文件分片上传，断点续传，秒传，上传进度展示，文件预览，新建目录，文件重命名，文件移动，文件分享，删除，下载 等功能。<br>
+> 3. 文件分享列表，取消分享。<br>
+> 4. 回收站功能，还原文件，彻底删除。<br>
+> 5. 设置模块  <br>
+    - 超级管理员可以看到所有用户上传的文件，可以对文件下载，删除。   <br>
+    - 超级管理员可以对用户进行管理，给用户分配空间，禁用、启用用户  <br>
+    - 超级管理员可以对系统进行设置，设置邮箱模板，设置用户注册初始化空间大小。  <br>
+> 6. 用户通过分享链接和分享码预览下载其他人分享的文件，同时也可以将文件保存到自己的网盘。
 
 > [!IMPORTANT] 前端技术栈：
 > `vite` + `vue3` + `axios` + `pinia` + `router` + `js`
@@ -1292,7 +1295,7 @@ const delUpload = (uid, index) => {
 > 上传文件done，在此之前本人至少观看视频五余遍，若有遗漏请指出 感谢
 ***
 
-## 删除-移动文件
+## 删除/移动文件
 多选操作：简单来说就是新建了个数组，然后把勾选的文件的fileId循环保存<br>
 定义数组 传参 操作列表  push到数组里  selectFileIdList就是选择框了<br>
 ```
@@ -1333,26 +1336,419 @@ const delFile = (row) => {
   }
 }
 ```
+**移动目录**
+其实思路就是 封装组件弹框》选择目录》确认发送请求》刷新列表
+> FolderSelect.vue
+罗老师的弹框封装大差不差，在取数据的时候需要注意一点：
+1. filePid是传进来的，记得后期改
+2. currentFileIds目的是为了过滤本文件的上级目录，但是没有考虑到当前目录其实还有子目录，这就是业务考虑，如果自己的项目不想过滤当前目录，currentFileIds参数为非必填，发请求的时候不要携带就ok，文件移动到本目录后端已做限制
+```
+const filePid = ref("0");//父级pid
+const folderList = ref([]);//子目录列表
+const currentFolder = ref({});//当前选中的目录信息
+const currentFileIds = ref({});//当前目录的 ID
+//发送请求，获取所有目录
+const loadAllFolder = async()=> {
+    let result = await proxy.Request({
+        url:api.loadAllFolder,
+        params:{
+          filePid:filePid.value,
+          currentFileIds:currentFileIds.value,
+        }
+    });
+    if(!result){
+        return
+    }
+    //将获取到的目录赋值给folderList
+    folderList.value =  result.data;
+}
 
+```
+ref 函数用于创建一个响应式引用对象。通过 ref 创建的引用对象可以用来访问和操作 DOM 元素或子组件的实例。
+
+
+其次的知识点就是
+```
+//关闭弹框
+const close = () => {
+    dialogConfig.value.show = false;
+}
+
+//打开移动弹框，传入当前目录
+const showFolderDialog = (currentFoloder) => {
+    dialogConfig.value.show = true;
+    currentFileIds.value = currentFoloder;
+    loadAllFolder();
+}
+defineExpose({
+  showFolderDialog,
+  close,
+});
+
+```
+>main.vue
+folderSelectRef 是一个通过 ref 创建的引用对象，它被用来引用 FolderSelect 子组件的实例，也就是说点击moveFolder函数的时候，会调用子组件的showFolderDialog函数，并传入当前文件的fileId
+```
+<FolderSelect ref="folderSelectRef" @folderSelect="moveFolderDone"></FolderSelect>
+
+//移动
+const folderSelectRef = ref();//
+
+// 单独移动
+const moveFolder = (data) => {
+  currentMoveFile.value = data;
+  folderSelectRef.value.showFolderDialog(data.fileId);//后期记得传值
+};
+```
+**批量移动**
+```
+//批量移动
+const moveFolderDone = async(folderId) => {
+  //判断是否在当前目录--略
+  //判断是否选中文件
+  let fileIdsArray = [];
+  // 如果当前移动的文件有值，则将当前移动的文件id添加到数组中,添加到 fileIdsArray 数组的末尾
+  if(currentMoveFile.value.fileId){
+    fileIdsArray.push(currentMoveFile.value.fileId);
+  }else{
+    // 如果当前移动的文件没有值，则将选中的文件id列表添加到数组中,将 selectFileIdList.value 数组中的所有元素合并到 fileIdsArray 数组中
+    fileIdsArray = fileIdsArray.concat(selectFileIdList.value)
+  }
+  // 接口
+  let result = await proxy.Request({
+    url:api.changeFileFolder,
+    params:{
+      fileIds:fileIdsArray.join(","),
+      filePid:folderId,
+    }
+  })
+  if(!result){
+    return
+  }
+  //关闭弹框
+  folderSelectRef.value.close();
+  //刷新列表
+  loadDataList();
+};
+```
 
 ***
 
 ## 目录导航/面包屑
+> p20 手搓面包屑,tips:elementPlus自带,但手搓也是个好的学习机会
 
-doing....
+**1. 首先捋一下功能:**
+1. 显示文件夹导航路径
+2. 提供导航操作（返回上一级、设置当前文件夹、打开文件夹）
+3. watch监听,管理 URL 路径
+
+**2. 那么需要封装思路:**
+
+1. 定义 Props : watchPath：是否监听路径变化 / shareId：共享 ID / adminShow：是否为管理员模式
+2. 事件处理:
+   - openFolder(data)：打开文件夹
+   - backParent()：返回上一级
+   - setCurrentFolder(index)：设置当前文件夹
+3. 路径管理:setPath()：根据文件夹列表更新 URL 路径
+4. 监听路由变化 : 使用 watch  监听路由变化，更新组件状态
 
 ***
 
-## 使用空间/图片预览
+```
+//点击目录
+// 打开文件夹
+const openFolder = (data) => {
+  // 解构赋值，从data中获取fileId和fileName
+  const { fileId, fileName } = data;
+  // 创建文件夹对象
+  const folder = {
+    fileName: fileName,
+    fileId: fileId,
+  };
+  // 将文件夹对象添加到文件夹列表中
+  folderList.value.push(folder);
+  // 设置当前文件夹为打开的文件夹
+  currentFolder.value = folder;
+  // 设置路径
+  setPath();
+};
+defineExpose({ openFolder, init });
 
-doing....
+```
+
+```
+//设置URL路径
+// 定义一个函数setPath，用于设置路径
+const setPath = () => {
+  // 如果props.watchPath为false，则执行doCallback函数，并返回
+  ---代码
+  // 定义一个空数组pathArray，用于存储文件夹列表中的fileId
+  ---代码
+  // 遍历folderList.value，将每个item的fileId添加到pathArray中
+  folderList.value.forEach((item) => {
+    pathArray.push(item.fileId);
+  });
+  // 使用router.push方法，将route.path和pathArray.join("/")作为参数，跳转到指定路径
+  router.push({
+    path: route.path,
+    query:
+      pathArray.length == 0
+        ? ""
+        : {
+            path: pathArray.join("/"),
+          },
+  });
+};
+
+```
+
+```
+watch(
+
+  () => route,
+  
+  (newVal, oldVal) => {
+  
+  	// 应对不需要监听路由变化的情况
+    if (!props.watchPath) {
+      return;
+    }
+    
+    //路由切换到其他路由  首页和管理员查看文件列表页面需要监听
+    if (
+      newVal.path.indexOf("/main") === -1 &&
+      newVal.path.indexOf("/settings/fileList") === -1 &&
+      newVal.path.indexOf("/share") === -1) {
+      return;
+    }
+    
+    const path = newVal.query.path;
+    const categoryId = newVal.params.category;
+    category.value = categoryId;
+    
+    if (path == undefined) { // 当点击的是 /main/video、/main/music 这些路由（其中的query参数不含path时）
+    
+      init();
+      
+    } else { // 当点击进入某个文件夹
+    
+      getNavigationFolder(path);
+      
+      //设置当前目录
+      let pathArray = path.split("/");
+      
+      currentFolder.value = {
+        fileId: pathArray[pathArray.length - 1],
+      };
+      
+      doCallback();
+    }
+  },
+  { immediate: true, deep: true }
+);
+```
+这些都没什么好说的，面包屑注重思路展示
+```
+// 定义一个函数，用于执行回调
+const doCallback = () => {
+  // 发射一个事件，传递categoryId和curFolder的值
+  emit("navChange", {
+    categoryId: category.value,
+    curFolder: currentFolder.value,
+  });
+};
+
+```
+mian.vue
+```
+
+// 导航改变回调
+//解构赋值，从data中获取categoryId和curFolder
+const navChange = (data) => {
+  const { categoryId, curFolder } = data;
+  currentFolder.value = curFolder;
+  category.value = categoryId;
+  loadDataList();
+}
+```
+
+## 使用空间/图片预览/下载
+**1.使用空间**<br>
+这简单得很，就是调接口，记得在上传完和初始化的时候再一次调用就行<br>
+```
+<el-progress
+//向上取整
+                :percentage="Math.floor(
+                  (getUseSpaceInfo.useSpace/getUseSpaceInfo.totalSpace)*10000)
+                   / 100"
+                  ></el-progress>
+              </div>
+
+// 使用空间
+const getUseSpaceInfo =  ref({ useSpace:0, totalSpace:1 });
+const getUseSpace = async ()=> {
+  let result = await proxy.Request({
+         -----
+  })
+  if(!result){
+    return
+  }
+  getUseSpaceInfo.value = result.data;
+}
+//setup语法糖自带creat生命周期
+getUseSpace();
+```
+
+**2.预览**<br>
+前端预览的大活主要是引入各种插件，在点击文件的时候判断文件类型，调用不同的api和插件进行预览，
+所以我不会事无巨细的把每一个预览文件都讲一遍，主要重点在preview.vue的数据交互、文件类型判断，文件地址映射关系，以及main.vue的调用逻辑上。
+在我的csdn上封装了另一种样式风格的pdf预览，有兴趣的可以看看[vue3Pdf预览](https://blog.csdn.net/weixin_64908228/article/details/137453056?spm=1001.2014.3001.5501)
+
+**功能**
+- 动态展示不同类型的文件预览。
+- 支持图片、视频、文档、Excel、PDF、文本、音乐等多种文件类型。
+- 提供文件下载链接。<br>
+ `<br>
+**逻辑**
+1. 模板
+   - 根据 `fileInfo.fileCategory` 和 `fileInfo.fileType` 动态展示预览组件。
+   - 使用 `Window` 组件包裹所有预览组件。
+
+2. 脚本
+   - 引入并注册预览组件。
+   - 定义响应式变量和方法：
+     - `imageUrl`：计算图片 URL。
+     - `windowshow`：控制窗口显示。
+     - `FILE_URL_MAP`：文件 URL 映射关系。
+     - `url`、`createDownloadUrl`、`downloadUrl`：文件预览和下载链接。
+     - `fileInfo`：存储文件信息。
+     - `showPreview`：设置文件预览和下载链接，控制窗口显示。
+> main.vue
+
+
+```
+// 预览
+const preview = (data) => {
+  // 如果是文件夹，跳转
+  if(data.folderType == 1) {
+    // 调用导航组件的打开文件夹方法
+    NavigationRef.value.openFolder(data)
+    return;
+  };
+  // 文件
+  // 如果文件状态不为2，提示文件未完成转码，无法预览
+  if(data.status != 2){
+    proxy.Message.warning("文件未完成转码，无法预览");
+    return
+  }
+  // 调用预览组件的显示预览方法
+  previewRef.value.showPreview(data,0);
+};
+```
+
+> preview.vue
+
+
+```
+// 显示预览
+// 定义一个函数，用于展示预览
+const showPreview = (data,showPart) => {
+    // 将传入的数据赋值给fileInfo
+    fileInfo.value = data;
+    // 如果传入的数据的文件类型为图片，则执行以下操作（查看图片的插件自带预览Window框）
+    if(data.fileCategory == 3) {
+        // 使用nextTick函数，在下一个DOM更新周期中执行imageViewRef.value.show(0)
+        nextTick(() => {
+            imageViewRef.value.show(0); 
+        })
+    } else {
+      // 否则，打开自带的window弹框
+      windowshow.value = true;
+
+      // 获取FILE_URL_MAP中对应showPart的fileUrl、createDownloadUrl和downloadUrl
+      //根据showPart映射对应的关系
+
+      let _url = FILE_URL_MAP[showPart].fileUrl;
+      let _createDownloadUrl = FILE_URL_MAP[showPart].createDownloadUrl;
+      let _downloadUrl = FILE_URL_MAP[showPart].downloadUrl;
+
+      // 如果传入的数据的文件类型为视频，则将_url设置为videoUrl
+      if(data.fileCategory == 1) {
+        _url = FILE_URL_MAP[showPart].videoUrl;
+      }
+
+      // 根据showPart的值，将_url和_createDownloadUrl拼接上对应的参数
+      // 根据不同的 showPart 值生成不同的 URL
+      if(showPart == 0 ) {
+        _url = _url + "/" + data.fileId;
+        _createDownloadUrl = _createDownloadUrl + "/" + data.fileId;
+      }else if(showPart == 1){
+        _url = _url + "/" +  data.userId + "/" + data.fileId;
+        _createDownloadUrl = _createDownloadUrl + "/" + data.userId + "/" + data.fileId;
+      }else if(showPart == 2){
+        _url = _url + "/" +  data.shareId + "/" + data.fileId;
+        _createDownloadUrl = _createDownloadUrl + "/" + data.shareId + "/" + data.fileId;
+      }
+
+      // 将拼接好的_url赋值给url
+      url.value = _url;
+
+      // 将拼接好的_createDownloadUrl赋值给createDownloadUrl
+      createDownloadUrl.value =_createDownloadUrl;
+
+      // 将_downloadUrl赋值给downloadUrl
+      downloadUrl.value = _downloadUrl;
+    }
+};
+
+```
+### 云盘采用的下载方式为调用浏览器自带的api
+引申的话可以采用大文件分片下载，在此帖链接[前端分片下载](https://juejin.cn/post/6954868879034155022)
+```
+//下载文件
+const download = async () => {
+
+  let result = await proxy.Request({
+    url: props.createDownloadUrl,
+  });
+  
+  if (!result) {
+    return;
+  }
+
+  // 下载（使用这种方式会弹出一个下载位置选择框, 地址栏不会变化; 指向的地址所属controller方法,以下载方式往response中写流）
+  window.location.href = props.downloadUrl + "/" + result.data;
+};
+```
+
 
 ***
 
 ## 分享
+> [!IMPORTANT] 前言tips：
+>文件分享仍然是简单的，封装弹框/表单校验/获取分享链接/设置密码
+>其实就是发送几个请求,父子组件方法的调用和html5部分继续略过~
+>**分享文件02**讲的就是分享列表，可以不看视频根据以前的代码自己写一遍，相当于练习
+>建议写完之前不要看老罗的代码，自己看着接口文档写一遍，会很有收获哦，这里我就略过了
 
-doing....
+> ShareFile.vue
 
+show方法其实就是init方法，初始化操作（全部置空/初始值）并将data浅拷贝到formData
+resetFields是elementPllus自带的重置表单方法
+
+```
+const show = (data) => {
+    showType.value = 0;
+    dialogConfig.value.show = true;
+    showCancel.value = true;
+    resultInfo.value = {};
+    nextTick(()=> {
+        formDataRef.value.resetFields();
+        formData.value = Object.assign({},data);
+    })
+};
+defineExpose({ show })
+```
 ***
 
 ## 回收站
@@ -1421,9 +1817,125 @@ const emit = defineEmits(["reload"]);
 
 
 ***
+（设置略过）
+## 外部分享
+![alt text](./img/share.png)
+路由封装，外部分享，他进的就不是Framework.vue框架页了
+>router.js
+```
+  {
+    //:shareId 是一个占位符，表示这个位置可以被任意的 shareId 值替换
+    //在页面里，可以拿params取到：const shareId = route.params.shareId;
+    path:'/shareCheck/:shareId',
+    name:'分享校验',
+    component: () => import("@/views/webShare/shareCheck.vue")
+  },
+```
+> shareCheck.vue
+一个正常的表单校验+发送请求，请求有效就跳转到文件share页
+```
+// 定义一个异步函数checkShare，用于检查分享码是否有效
+const checkShare = async () => {
+  // 调用formDataRef.value.validate方法，验证表单数据是否有效
+  formDataRef.value.validate(async (valid) => {
+    // 如果表单数据无效，则直接返回
+    if (!valid) {
+      return;
+    }
+    // 发送请求，检查分享码是否有效
+    let result = await proxy.Request({
+      url: api.checkShareCode,
+      params: {
+        shareId: shareId,
+        code: formData.value.code,
+      },
+    });
+    // 如果请求结果为空，则直接返回
+    if (!result) {
+      return;
+    }
+    // 如果分享码有效，则跳转到分享页面
+    router.push(`/share/${shareId}`);
+  });
+};
+```
+> share.vue
+基本都是之前的代码copy来就好了：
+1. 获取分享信息 (getShareInfo)
 
-## 外部分析
+2. 加载文件列表 (loadDataList)
 
-doing....
+3. 显示操作按钮 (showOp 和 cancelShowOp)
 
+4. 文件预览 (preview)
+
+5. 下载文件 (download)
+
+6. 保存文件到网盘 (save2MyPan 和 save2MyPanSingle)
+
+7. 取消分享 (cancelShare)
+
+8. 导航变化 (navChange)
+
+```
+//保存到我的网盘
+// 定义文件夹选择器的引用
+const folderSelectRef = ref();
+// 定义保存到我的盘的文件id数组
+const save2MyPanFileIdArray = [];
+// 保存到我的盘
+const save2MyPan = () => {
+  // 如果没有选择文件，则返回
+  if (selectFileIdList.value.length == 0) {
+    return;
+  }
+  // 如果没有登录，则跳转到登录页面
+  if (!proxy.VueCookies.get("userInfo")) {
+    router.push("/login?redirectUrl=" + route.path);
+    return;
+  }
+  // 将选择的文件id保存到数组中
+  save2MyPanFileIdArray.value = selectFileIdList.value;
+  // 显示文件夹选择对话框
+  folderSelectRef.value.showFolderDialog();
+};
+// 保存单个文件到我的盘
+const save2MyPanSingle = (row) => {
+  // 如果没有登录，则跳转到登录页面
+  if (!proxy.VueCookies.get("userInfo")) {
+    router.push("/login?redirectUrl=" + route.path);
+    return;
+  }
+  // 将单个文件的id保存到数组中
+  save2MyPanFileIdArray.value = [row.fileId];
+  // 显示文件夹选择对话框
+  folderSelectRef.value.showFolderDialog();
+};
+
+```
+
+```
+// 执行保存操作
+const save2MyPanDone = async (folderId) => {
+  // 发送请求保存文件到我的盘
+  let result = await proxy.Request({
+    url: api.saveShare,
+    params: {
+      shareId: shareId,
+      shareFileIds: save2MyPanFileIdArray.value.join(","), // 将文件id数组转换为字符串
+      myFolderId: folderId,
+    },
+  });
+  // 如果保存失败，则返回
+  if (!result) {
+    return;
+  }
+  // 重新加载数据列表
+  loadDataList();
+  // 显示保存成功的提示信息
+  proxy.Message.success("保存成功");
+  // 关闭文件夹选择对话框
+  folderSelectRef.value.close();
+};
+```
 ***
