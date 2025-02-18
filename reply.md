@@ -1,7 +1,10 @@
+---
+comment: true
+---
 # 初心
 <span style="font-weight:bolder; color:#5393F6">相信都在使用罗老师的项目进行面试/答辩,那么问题必不可少，所以我在这里汇总一篇，
 大家也可以分享自己遇到的问题，也可以分享自己的精彩回答,我都会汇总到这个页面:</span>
-【腾讯文档】easypan前端面试or答辩问到的问题:https://docs.qq.com/sheet/DRHF1Q2drWld5dlR0
+<span style="color:#FF0000">👇下面搞了评论区喔~</span>
 
 
 ***

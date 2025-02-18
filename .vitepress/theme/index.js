@@ -7,6 +7,8 @@ import useVisitData from './useVisitData'
 import './style/var.css';
 import Confetti from './components/Confetti.vue'
 import DataPanel from './components/DataPanel.vue'
+import giscusTalk from 'vitepress-plugin-comment-with-giscus';
+import { useData, useRoute } from 'vitepress';
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
@@ -21,7 +23,31 @@ export default {
     }
     app.component("Confetti", Confetti);
     app.component("DataPanel", DataPanel);
+  },
+  setup() {
+    // Get frontmatter and route
+    const { frontmatter } = useData();
+    const route = useRoute();
+
+    // Obtain configuration from: https://giscus.app/
+    giscusTalk({
+      repo: 'HerryXiaoo/HerryXiaoo',
+      repoId: 'R_kgDOKisFmQ',
+      category: 'Q&A',
+      categoryId: 'DIC_kwDOKisFmc4CnEml',
+      mapping: 'pathname',
+      inputPosition: 'top',
+      lang: 'en',
+      lightTheme: 'light',
+      darkTheme: 'transparent_dark'
+    }, {
+      frontmatter,
+      route
+    },
+      false
+    );
   }
+
 }
 
 

@@ -24,7 +24,6 @@
 > [!TIP]
 > 欢迎你加入罗老师的群聊和群友一起探讨技术上的问题，一起学习，一起进步，一起成长，一起成为更好的自己。<br>
 > 祝你学习愉快，未来可期~<br>
-<!-- 
-[vitepress官方文档](https://vitepress.dev/zh/guide/markdown#table-of-contents) ☀️
-[markdown文档 ](https://yiov.top/daily/markdown/#%E8%B6%85%E9%93%BE%E6%8E%A5)☀️
-[ vitepress主题](https://vitepress.yiov.top/style.html#%E7%BB%84%E6%88%90) -->
+
+
+<span style="color: #7B7B7B; font-size: 12px; font-style: italic;">Last updated: 2025-02-18 20:38:56</span>
