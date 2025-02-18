@@ -31,7 +31,14 @@ features:
     title:  文件在线预览
     details: 视频的分片播放，pdf、excel、word 在线预览
 
+
 ---
+
+<script setup>
+import DataPanel from './DataPanel.vue'
+</script>
+
+<DataPanel />
 
 <style>
 :root {

@@ -1,12 +1,14 @@
 
 ### 介绍
+ 其实直接clone我的 ，上传就可以
+ 跟着这两个文档基本可以写完，deploy.yml可以按着我来，最新（2025-02-18）
 
+ - vitepress介绍：https://aiyo.space/VPDocs/%E5%89%8D%E8%A8%80.html
+ - githubPages+vitePress：https://vitepress.dev/zh/guide/deploy#github-pages
 
 ### 部署流程
 
 * 托管选择： github-pages 	
-
-* gitee镜像到github
 
   ### 使用Github Pages部署
 
@@ -23,7 +25,7 @@ Github Pages专门用来托管静态内容，由于不需要服务器且基于gi
 ​      ` Actions ➡️ set up a workflow yourself ➡️ deploy.yml `
 
 ```
-name: Deploy VitePress site to Pages
+nname: Deploy VitePress site to Pages
 
 on:
   push:
@@ -47,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # 如果未启用 lastUpdated，则不需要
       - name: Setup pnpm
@@ -55,12 +57,12 @@ jobs:
         with:
           version: 8.6.12 # 指定需要的 pnpm 版本
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: pnpm # 设置缓存
       - name: Setup Pages
-        uses: actions/configure-pages@v3  # 在工作流程自动配置GithubPages
+        uses: actions/configure-pages@v4  # 从 v3 升级到 v4
       - name: Install dependencies
         run: pnpm install # 安装依赖
       - name: Build with VitePress
@@ -68,7 +70,7 @@ jobs:
           pnpm run docs:build # 启动项目
           touch .nojekyll  # 通知githubpages不要使用Jekyll处理这个站点，不知道为啥不生效，就手动搞了
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2  # 上传构建产物
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist # 指定上传的路径，当前是根目录，如果是docs需要加docs/的前缀
 
@@ -76,40 +78,13 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }} # 从后续的输出中获取部署后的页面URL
-    needs: build    # 在build后面完成
-    runs-on: ubuntu-latest  # 运行在最新版本的ubuntu系统上
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
     name: Deploy
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment  # 指定id
-        uses: actions/deploy-pages@v2 # 将之前的构建产物部署到github pages中
+        id: deployment
+        uses: actions/deploy-pages@v4  # 从 v2 升级到 v4
+
 ```
-
-## 自定义域名
-
-* 出bug了，暂时不用
-
-###### 1、阿里云注册一个域名
-
-###### 2、设置域名解析
-
-###### 3、添加记录，将域名指向自己的[Github](https://so.csdn.net/so/search?q=Github&spm=1001.2101.3001.7020) Page
-
-首先获得自己的Github Page的IP地址。
-
-```bash
-ping username.github.io
-```
-
-添加一条记录，记录类型：A / 主机记录：@/记录值：刚获得的Github Page的IP地址。
-
-再新建一条记录， 记录类型：CNAME / 主机记录：www/记录值username.github.io 
-
-###### 4、在Github page中设置
-在自己的username.github.io界面，点击Setting，然后直接往下翻，找到GitHub Pages，并进入设置页面。
-
-然后在下面设置域名，并勾选Enforce HTTPS（这个是有加密的，更好些，这样之后自己的网站链接前面是https开头的，如果这里是灰状勾选不了，是因为设置时有问题导致的。），A处就是自己的网站名字。
-
-
-
