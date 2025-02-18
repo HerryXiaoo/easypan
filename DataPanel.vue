@@ -1,12 +1,12 @@
 <template>
   <div class="data-panel">
-    <div class="text" id="vercount_container_site_pv">
+    <div class="text" id="busuanzi_container_site_pv">
       <div>本站总访问量</div>
-      <span id="vercount_value_site_pv" class="font-bold">--</span>次
+      <span id="busuanzi_value_site_pv" class="font-bold">--</span>次
     </div>
-    <div class="text" id="vercount_container_site_uv">
+    <div class="text" id="busuanzi_container_site_uv">
       <div>本站访客数</div>
-      <span id="vercount_value_site_uv" class="font-bold">--</span>人次
+      <span id="busuanzi_value_site_uv" class="font-bold">--</span>人次
     </div>
   </div>
 </template>
