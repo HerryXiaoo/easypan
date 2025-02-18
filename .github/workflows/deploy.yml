@@ -43,7 +43,7 @@ jobs:
           pnpm run docs:build # 启动项目
           touch .nojekyll  # 通知githubpages不要使用Jekyll处理这个站点，不知道为啥不生效，就手动搞了
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3  # 从 v2 升级到 v3
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist # 指定上传的路径，当前是根目录，如果是docs需要加docs/的前缀
 
@@ -51,11 +51,11 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }} # 从后续的输出中获取部署后的页面URL
-    needs: build    # 在build后面完成
-    runs-on: ubuntu-latest  # 运行在最新版本的ubuntu系统上
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
     name: Deploy
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment  # 指定id
-        uses: actions/deploy-pages@v2 # 将之前的构建产物部署到github pages中
+        id: deployment
+        uses: actions/deploy-pages@v4  # 从 v2 升级到 v4

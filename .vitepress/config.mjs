@@ -18,7 +18,8 @@ export default defineConfig({
           { text: '主体笔记', link: '/concent' },
           { text: '通用组件', link: '/component' },
           { text: '通用方法', link: '/utils' },
-          { text: '知识点扩展', link: '/knowledge' }
+          { text: '知识点扩展', link: '/knowledge' },
+          { text: '部署', link: '/webDeploy' }
         ]
       },    
       { text: '答辩/面试', link: '/reply' },
