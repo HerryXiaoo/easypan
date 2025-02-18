@@ -5,7 +5,6 @@ import './style.css'
 import { inBrowser } from 'vitepress'
 import useVisitData from './useVisitData'
 import './style/var.css';
-import DataPanel from '../../DataPanel.vue'
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
@@ -18,7 +17,6 @@ export default {
     if (inBrowser) {
       useVisitData()
     }
-    app.component('DataPanel', DataPanel)
   }
 }
 

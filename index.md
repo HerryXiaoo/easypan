@@ -36,10 +36,11 @@ features:
 
 <script setup>
 import DataPanel from './DataPanel.vue'
+import Confetti from './Confetti.vue'
 </script>
 
 <DataPanel />
-
+<Confetti />
 <style>
 :root {
   --vp-c-brand-1: #77bff6;
