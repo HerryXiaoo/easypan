@@ -16,12 +16,7 @@ export default {
   },
   enhanceApp({ app, router, siteData }) {
     if (inBrowser) {
-      // 路由加载完成，在加载页面组件后（在更新页面组件之前）调用。
-      router.onAfterPageLoad = (to) => {
-        // 调用统计访问接口hooks
-        useVisitData()
-      }
-
+      useVisitData()
     }
     app.component('DataPanel', DataPanel)
   }
