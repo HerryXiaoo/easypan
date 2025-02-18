@@ -14,12 +14,12 @@
 
 此笔记会**持续更新**，笔记内容均为个人总结，可以在群聊里提出建议，高强度水群。
 
-我的Gitee笔记地址，给我一个小小的Start吧！：[Herry (gitee.com)](https://gitee.com/x121318/easy-cloud-disk)
+我的GitHub笔记地址，给我一个小小的Start吧！：[感谢strat✨](https://github.com/HerryXiaoo/easypan)
 
 
 
 
-✨无私奉献，用爱发电，欢迎赞助
+<Confetti />
 
 > [!TIP]
 > 欢迎你加入罗老师的群聊和群友一起探讨技术上的问题，一起学习，一起进步，一起成长，一起成为更好的自己。<br>

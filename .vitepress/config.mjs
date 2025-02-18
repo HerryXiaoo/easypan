@@ -5,7 +5,7 @@ export default defineConfig({
   base: "/easypan/",
   head: [["link", { rel: "icon", href: "/easypan/logo.svg" }]],
   title: "Herry的easy云盘学习笔记",
-  description: "Herry herry Easy云盘 程序员老罗 easy云盘源码 easy云盘学习笔记 easy云盘源码分析", //作用：SEO
+  description: "Herry herry Easy云盘 程序员老罗 easy云盘源码 easy云盘学习笔记 easy云盘源码分析Herry的Easy云盘项目学习笔记，详细记录项目开发过程、源码分析、组件封装及部署方案。作为程序员Herry的技术博客，帮助开发者更好地理解和实现云盘系统。", //作用：SEO
   //左上角logo
   themeConfig: {
     logo: "/avatar.jpg",
@@ -66,7 +66,7 @@ export default defineConfig({
         },
         link: 'https://space.bilibili.com/499388891'
       },
-      { icon: 'github', link: 'https://gitee.com/x121318' },
+      { icon: 'github', link: 'https://github.com/HerryXiaoo/easypan' },
     ],
     //头部标签
     head: [["link", { rel: "icon", href: "/logo.svg" }]],

@@ -5,6 +5,8 @@ import './style.css'
 import { inBrowser } from 'vitepress'
 import useVisitData from './useVisitData'
 import './style/var.css';
+import Confetti from './components/Confetti.vue'
+import DataPanel from './components/DataPanel.vue'
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
@@ -17,6 +19,8 @@ export default {
     if (inBrowser) {
       useVisitData()
     }
+    app.component("Confetti", Confetti);
+    app.component("DataPanel", DataPanel);
   }
 }
 
