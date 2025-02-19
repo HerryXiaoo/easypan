@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: "/easypan/",
+  base: "/",
   head: [["link", { rel: "icon", href: "/easypan/logo.svg" }]],
   title: "Herry的easy云盘学习笔记",
   description: "Herry herry Easy云盘 程序员老罗 easy云盘源码 easy云盘学习笔记 easy云盘源码分析Herry的Easy云盘项目学习笔记，详细记录项目开发过程、源码分析、组件封装及部署方案。作为程序员Herry的技术博客，帮助开发者更好地理解和实现云盘系统。", //作用：SEO
